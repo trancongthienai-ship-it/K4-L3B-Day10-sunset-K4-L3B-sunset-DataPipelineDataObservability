@@ -22,6 +22,7 @@
 | Khởi tạo và lưu Vector DB | `src/retrieval/index.py` — `LocalEmbeddingIndex.build`, `load`, `search`, `lookup` | DataFrame sạch có `paper_id`, `title`, `text_for_embedding` và metadata | ChromaDB tại `data/chroma/`, manifest embedding JSON và kết quả Top-K | Hoàn thành |
 | Embedding | `src/retrieval/embeddings.py` — `MiniLMEmbeddings` | Danh sách văn bản hoặc một query | Vector chuẩn hóa từ SentenceTransformers | Hoàn thành |
 | Agent logic | `src/retrieval/agent.py` — `build_agent`, `run_agent_question` | Câu hỏi người dùng và `LocalEmbeddingIndex` | Câu trả lời có dữ liệu từ công cụ semantic search/lookup | Hoàn thành |
+| QA extraction | `src/retrieval/qa.py` — `answer_question`, `_extract_answer` | Câu hỏi và kết quả Top-K | Câu trả lời đúng trường summary/authors/date/categories cùng nguồn đã truy xuất | Hoàn thành |
 | LLM adapter | `src/retrieval/llm.py` — `build_llm` | Cấu hình provider/model trong `Settings` | LangChain chat model tương ứng | Hoàn thành |
 
 ### Việc hỗ trợ ngoài phạm vi chính
@@ -76,7 +77,7 @@ python script/run_phase1.py
 ```
 
 - **Kết quả mong đợi:** test metadata và empty-result đều pass; pipeline tạo collection và artifact baseline.
-- **Kết quả thực tế:** test retrieval pass; repository có ChromaDB, embedding manifest, answer log và metrics.
+- **Kết quả thực tế:** ngày 2026-09-26, toàn bộ test hiện có chạy `6 passed`; regression test xác nhận metadata, empty-result và cách diễn đạt authors/categories. Lần chạy mới của pipeline bị chặn trước khi thực thi vì `.venv` thiếu package `langchain`, nên metrics bên dưới vẫn là artifacts đã có và không được mô tả là kết quả chạy mới.
 - **Artifact/log:** `data/chroma/`, `data/embeddings/papers_embeddings.json`, `data/results/baseline_answers.json`, `data/results/baseline_metrics.json`.
 
 ## 5. Một quyết định kỹ thuật quan trọng
@@ -127,7 +128,7 @@ python script/run_phase1.py
 
 Corruption ảnh hưởng rõ nhất là mất/sai nội dung dùng để embedding vì dense retrieval phụ thuộc trực tiếp vào representation của tài liệu. DOI trùng còn làm mapping ground-truth không ổn định; summary trống làm context mất tín hiệu ngữ nghĩa.
 
-Kết quả khác kỳ vọng là retrieval hit baseline đạt `1.0` nhưng answer quality chỉ đạt token F1 `0.4218` và judge accuracy `0.5`. Kiểm tra `baseline_answers.json` cho thấy các câu hỏi authors/categories thường trả summary. Điều này chứng minh retrieval đúng chưa đảm bảo answer extraction đúng. Ngoài ra, log judge ghi rõ fallback heuristic được dùng; không nên mô tả các answer baseline là output trực tiếp từ OpenAI.
+Kết quả khác kỳ vọng là retrieval hit baseline đạt `1.0` nhưng answer quality chỉ đạt token F1 `0.4218` và judge accuracy `0.5`. Kiểm tra `baseline_answers.json` cho thấy các câu hỏi authors/categories thường trả summary. Nguyên nhân là `_extract_answer()` chưa nhận cách diễn đạt `Who are the authors...` và `What are the categories...` trong test set; router đã được sửa và có regression test. Chưa cập nhật bảng metrics vì lần chạy pipeline mới bị chặn bởi dependency `langchain` còn thiếu. Ngoài ra, log judge ghi rõ fallback heuristic được dùng; không nên mô tả các answer baseline là output trực tiếp từ OpenAI.
 
 ## 9. Điều học được và hướng cải thiện
 

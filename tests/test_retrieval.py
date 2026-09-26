@@ -69,6 +69,40 @@ def test_build_documents_normalizes_chromadb_metadata_values(monkeypatch) -> Non
     }
 
 
+def test_extract_answer_handles_test_set_question_wording(monkeypatch) -> None:
+    core_config = types.ModuleType("core.config")
+    core_config.Settings = object
+    core_utils = types.ModuleType("core.utils")
+    core_utils.first_sentence = lambda text: text.split(".", 1)[0] + "."
+    retrieval_index = types.ModuleType("retrieval.index")
+    retrieval_index.LocalEmbeddingIndex = object
+    retrieval_index.SearchResult = object
+
+    qa_module = _load_module(
+        monkeypatch,
+        "retrieval_qa_under_test",
+        "src/retrieval/qa.py",
+        {
+            "core.config": core_config,
+            "core.utils": core_utils,
+            "retrieval.index": retrieval_index,
+        },
+    )
+    result = types.SimpleNamespace(
+        metadata={
+            "authors_joined": "Ada Lovelace, Alan Turing",
+            "published": "2026-09-26",
+            "categories_joined": "AI, RAG",
+            "summary": "Retrieval summary. More detail.",
+        }
+    )
+
+    assert qa_module._extract_answer("Who are the authors of 'Reliable RAG'?", result) == (
+        "Ada Lovelace, Alan Turing"
+    )
+    assert qa_module._extract_answer("What are the categories of 'Reliable RAG'?", result) == "AI, RAG"
+
+
 def test_format_search_results_explains_empty_result(monkeypatch) -> None:
     langchain_agents = types.ModuleType("langchain.agents")
     langchain_agents.create_agent = object
