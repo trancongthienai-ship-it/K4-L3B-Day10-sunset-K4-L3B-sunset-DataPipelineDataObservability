@@ -21,6 +21,16 @@ class SearchResult:
     metadata: dict[str, Any]
 
 
+def _normalize_metadata_value(value: Any) -> str | int | float | bool:
+    if value is None or pd.isna(value):
+        return ""
+    if isinstance(value, pd.Timestamp):
+        return value.strftime("%Y-%m-%d")
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    return str(value)
+
+
 class LocalEmbeddingIndex:
     def __init__(
         self,
@@ -52,14 +62,17 @@ class LocalEmbeddingIndex:
                     "title": row["title"],
                     "content": row["text_for_embedding"],
                     "metadata": {
-                        "paper_id": row["paper_id"],
-                        "title": row["title"],
-                        "published": row["published"],
-                        "authors_joined": row["authors_joined"],
-                        "categories_joined": row["categories_joined"],
-                        "summary": row["summary"],
-                        "abs_url": row["abs_url"],
-                        "pdf_url": row["pdf_url"],
+                        key: _normalize_metadata_value(row[key])
+                        for key in (
+                            "paper_id",
+                            "title",
+                            "published",
+                            "authors_joined",
+                            "categories_joined",
+                            "summary",
+                            "abs_url",
+                            "pdf_url",
+                        )
                     },
                 }
             )

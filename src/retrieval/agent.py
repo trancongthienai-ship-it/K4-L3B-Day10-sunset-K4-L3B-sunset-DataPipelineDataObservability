@@ -10,20 +10,23 @@ from retrieval.index import LocalEmbeddingIndex
 from retrieval.llm import build_llm
 
 
+def _format_search_results(results: list[Any]) -> str:
+    if not results:
+        return "No relevant papers found in the indexed corpus."
+    return "\n\n".join(
+        f"paper_id: {result.paper_id}\n"
+        f"title: {result.title}\n"
+        f"score: {result.score:.4f}\n"
+        f"{result.content}"
+        for result in results
+    )
+
+
 def build_agent(settings: Settings, index: LocalEmbeddingIndex):
     @tool
     def semantic_search_papers(query: str, top_k: int = 4) -> str:
         """Search the local paper corpus with embeddings and return the most relevant papers."""
-        results = index.search(query, top_k=top_k)
-        lines = []
-        for result in results:
-            lines.append(
-                f"paper_id: {result.paper_id}\n"
-                f"title: {result.title}\n"
-                f"score: {result.score:.4f}\n"
-                f"{result.content}"
-            )
-        return "\n\n".join(lines)
+        return _format_search_results(index.search(query, top_k=top_k))
 
     @tool
     def lookup_paper(paper_id_or_title: str) -> str:
