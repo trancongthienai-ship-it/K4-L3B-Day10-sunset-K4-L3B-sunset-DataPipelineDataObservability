@@ -1,0 +1,9 @@
+{
+  "dropped_latest": 2,
+  "blank_summary": 1,
+  "injected_noise": 1,
+  "truncated_title": 1,
+  "old_date": 1,
+  "duplicate_rows": 1,
+  "total_rows": 23
+}

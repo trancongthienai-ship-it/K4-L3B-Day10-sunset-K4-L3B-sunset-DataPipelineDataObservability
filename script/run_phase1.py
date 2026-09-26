@@ -1,7 +1,12 @@
 from __future__ import annotations
 
-from pipelines.phase1 import main
+import sys
+from pathlib import Path
 
+# Thêm thư mục src vào PYTHONPATH để có thể import các module bên trong
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from pipelines.phase1 import main
 
 if __name__ == "__main__":
     main()
